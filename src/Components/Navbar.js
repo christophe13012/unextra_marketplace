@@ -21,17 +21,13 @@ class Navbar extends Component {
       get(child(dbRef, `users/${uid}`)).then((snapshot) => {
         if (snapshot.exists()) {
           const data = snapshot.val();
-          if (
-            data &&
-            data.type &&
-            (data.type == "admin" || data.type == "commercial")
-          ) {
-            this.setState({ admin: true });
+          if (data && data.type) {
+            this.setState({ type: data.type });
           } else {
-            this.setState({ admin: false });
+            this.setState({ type: false });
           }
         } else {
-          this.setState({ admin: false });
+          this.setState({ type: false });
         }
       });
     });
@@ -75,6 +71,7 @@ class Navbar extends Component {
               >
                 <img src={require("../assets/images/logo.png")} alt="" />
               </NavLink>
+              <span>{this.state.type && this.state.type}</span>
             </div>
             <div className={"col-md-9" + right}>
               <nav className="primary-menu">
@@ -84,7 +81,7 @@ class Navbar extends Component {
                 >
                   <i className="ti-menu"></i>
                 </button>
-                {!this.state.admin && (
+                {true && (
                   <ul className={this.state.menuOpen ? "active" : ""}>
                     {/*<li>
                     <NavLink to="/" onClick={this.clearStateHandler}>
@@ -100,15 +97,17 @@ class Navbar extends Component {
                         MES COMPTES UNEXTRA
                       </NavLink>
                     </li>
-                    <li>
-                      <NavLink
-                        activeStyle={{ color: "#ff817e" }}
-                        to="/prospect"
-                        onClick={this.clearStateHandler}
-                      >
-                        proposition en cours
-                      </NavLink>
-                    </li>
+                    {false && (
+                      <li>
+                        <NavLink
+                          activeStyle={{ color: "#ff817e" }}
+                          to="/prospect"
+                          onClick={this.clearStateHandler}
+                        >
+                          proposition en cours
+                        </NavLink>
+                      </li>
+                    )}
                     <li>
                       <NavLink
                         activeStyle={{ color: "#ff817e" }}
