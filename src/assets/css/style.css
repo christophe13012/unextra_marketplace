@@ -1317,3 +1317,17 @@ section {
 .error h2 {
   margin-bottom: 30px;
 }
+
+.nav-link {
+  color: black !important;
+}
+
+li > .active {
+  background-color: #23eb11 !important;
+  color: white !important;
+}
+
+button {
+  background-color: #23eb11 !important;
+  border-color: #23eb11 !important;
+}

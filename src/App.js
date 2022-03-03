@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { useState, useEffect } from "react";
 import { BrowserRouter } from "react-router-dom";
 import { Switch, Route } from "react-router-dom";
 import Layout from "./Layouts/Layout";
@@ -9,7 +9,7 @@ import Contact from "./Layouts/Pages/Contact";
 import SinglePost from "./Sections/SinglePost";
 import ErrorPage from "./Components/Error";
 
-import { ToastContainer, toast } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 // All external css
@@ -25,11 +25,20 @@ import Prospect from "./Layouts/Pages/Prospect";
 import Gestion from "./Layouts/Pages/Gestion";
 import Achat from "./Layouts/Pages/Achat";
 import Forbidden from "./Layouts/Pages/Forbidden";
+import modeContext from "./modeContext";
 
-class App extends Component {
-  render() {
-    return (
-      <BrowserRouter>
+export const ModeContext = React.createContext("partenaire");
+
+const App = () => {
+  const [mode, setMode] = useState("partenaire");
+  useEffect(() => {
+    if (sessionStorage.getItem("mode")) {
+      setMode(sessionStorage.getItem("mode"));
+    }
+  }, []);
+  return (
+    <BrowserRouter>
+      <modeContext.Provider value={{ mode, setMode }}>
         <div className="App">
           <Layout>
             <Switch>
@@ -52,9 +61,9 @@ class App extends Component {
           </Layout>
           <ToastContainer />
         </div>
-      </BrowserRouter>
-    );
-  }
-}
+      </modeContext.Provider>
+    </BrowserRouter>
+  );
+};
 
 export default App;

@@ -1,15 +1,16 @@
 import React, { Component } from "react";
-import { NavLink, withRouter, useHistory } from "react-router-dom";
+import { NavLink, withRouter } from "react-router-dom";
 import { auth, logInWithEmailAndPassword } from "../firebase";
 import { getDatabase, ref, onValue, child, get } from "firebase/database";
+import { useLocation } from "react-router-dom";
 
 class Navbar extends Component {
   state = {
     menuOpen: false,
     admin: true,
   };
-
   componentDidMount() {
+    const { match, location, history } = this.props;
     auth.onAuthStateChanged((user) => {
       if (!user) {
         return;
@@ -32,6 +33,11 @@ class Navbar extends Component {
       });
     });
   }
+
+  getLocation = () => {
+    const location = useLocation();
+    console.log("{location.pathname}", location.pathname);
+  };
 
   // isHome =
   // absHeader = ( this.props.location.pathname === "/") ? ' abs-header' : '';
@@ -58,20 +64,17 @@ class Navbar extends Component {
   render() {
     let absHeader = this.props.location.pathname === "/" ? " abs-header" : "";
     let right = this.props.location.pathname === "/" ? "" : " text-right";
-
+    console.log("mode dans navbar", this.props.mode);
     return (
       // Header start
       <header className={"header" + absHeader}>
         <div className="container">
           <div className="row align-items-end">
             <div className="col-md-3">
-              <NavLink
-                to={this.state.admin ? "/" : "/gestion"}
-                className="logo"
-              >
+              <NavLink to={"#"} className="logo">
                 <img src={require("../assets/images/logo.png")} alt="" />
               </NavLink>
-              <span>{this.state.type && this.state.type}</span>
+              <span>{this.props.mode == "partenaire" && "Partenaire"}</span>
             </div>
             <div className={"col-md-9" + right}>
               <nav className="primary-menu">
@@ -81,22 +84,24 @@ class Navbar extends Component {
                 >
                   <i className="ti-menu"></i>
                 </button>
-                {true && (
+                {this.props.location.pathname != "/" && (
                   <ul className={this.state.menuOpen ? "active" : ""}>
                     {/*<li>
                     <NavLink to="/" onClick={this.clearStateHandler}>
                       ACCUEIL
                     </NavLink>
                  </li>*/}
-                    <li>
-                      <NavLink
-                        activeStyle={{ color: "#ff817e" }}
-                        to="/gestion"
-                        onClick={this.clearStateHandler}
-                      >
-                        MES COMPTES UNEXTRA
-                      </NavLink>
-                    </li>
+                    {this.props.mode == "partenaire" && (
+                      <li>
+                        <NavLink
+                          activeStyle={{ color: "#ff817e" }}
+                          to="/gestion"
+                          onClick={this.clearStateHandler}
+                        >
+                          MES COMPTES UNEXTRA
+                        </NavLink>
+                      </li>
+                    )}
                     {false && (
                       <li>
                         <NavLink

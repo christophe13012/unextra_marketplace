@@ -12,7 +12,7 @@ function useQuery() {
   return React.useMemo(() => new URLSearchParams(search), [search]);
 }
 
-function RegisterComponent() {
+function RegisterComponent({ changeType }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -24,17 +24,8 @@ function RegisterComponent() {
   const db = getDatabase();
 
   const register = () => {
-    if (!name) alert("Merci d'entrer votre nom");
-    if (!code) {
-      toast.warn(
-        "Vous devez contacter notre service client pour créer un compte !",
-        {
-          position: toast.POSITION.TOP_CENTER,
-        }
-      );
-    } else {
-      registerWithEmailAndPassword(name, email, password);
-    }
+    registerWithEmailAndPassword(name, email, password);
+    history.push("/achat");
   };
 
   useEffect(() => {
@@ -51,7 +42,6 @@ function RegisterComponent() {
         get(child(dbRef, `prospectEmail/${code}`)).then((snapshot) => {
           if (snapshot.exists()) {
             const data = snapshot.val();
-            console.log("data", data);
             set(ref(db, "prospect/" + user.uid), data);
 
             toast.success("Votre compte a bien été créé !", {
@@ -76,13 +66,6 @@ function RegisterComponent() {
       <input
         type="text"
         className="register__textBox"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Votre nom"
-      />
-      <input
-        type="text"
-        className="register__textBox"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         placeholder="Adresse E-mail"
@@ -95,12 +78,20 @@ function RegisterComponent() {
         placeholder="Mot de passe"
       />
       <button className="register__btn" onClick={register}>
-        S'enregistrer
+        Créer son compte
       </button>
-      <div>
-        Déjà un compte ? <Link to={"/?code=" + code}>Se connecter</Link>{" "}
-        maintenant.
-      </div>
+      <button
+        type="button"
+        class="btn btn-primary mt-3"
+        style={{
+          backgroundColor: "#1266F1",
+          margin: "0 auto",
+          display: "inline-block",
+        }}
+        onClick={changeType}
+      >
+        J'ai déja un compte ? Je me connecte
+      </button>
     </div>
   );
 }

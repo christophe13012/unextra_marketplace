@@ -12,7 +12,6 @@
   text-align: center;
   background-color: #dcdcdc;
   padding: 30px;
-  border-radius: 10px;
 }
 
 .login__textBox {
@@ -36,4 +35,8 @@
 
 .login div {
   margin-top: 7px;
+}
+
+.navbar-nav > .active a {
+  color: aqua;
 }

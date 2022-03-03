@@ -11,7 +11,7 @@ function useQuery() {
   return React.useMemo(() => new URLSearchParams(search), [search]);
 }
 
-function Login() {
+function Login({ changeType, mode }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [user, loading, error] = useAuthState(auth);
@@ -33,6 +33,7 @@ function Login() {
         const prospectRef = ref(db, "prospectEmail/" + code);
         onValue(prospectRef, (snapshot) => {
           const data = snapshot.val();
+          /*
           set(ref(db, "prospect/" + user.uid), data);
           // history.push("/prospect?code=" + code);
           history.push({
@@ -40,14 +41,26 @@ function Login() {
             search: "?code=" + code,
             state: { detail: data },
           });
+          */
         });
       } else {
-        history.push("/marketplace");
+        if (mode == "partenaire") {
+          history.push("/gestion");
+        } else {
+          history.push("/achat");
+        }
       }
     }
   }, [user, loading]);
   return (
-    <div className="mt-4">
+    <div
+      className="mt-4"
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        flexDirection: "column",
+      }}
+    >
       <div className="login__container">
         <input
           type="text"
@@ -72,11 +85,19 @@ function Login() {
         <div>
           <Link to="/reset">Mot de passe oublié</Link>
         </div>
-        <div>
-          Vous n'avez pas de compte ?{" "}
-          <Link to={"/register?code=" + code}>S'enregistrer</Link> maintenant.
-        </div>
       </div>
+      <button
+        type="button"
+        class="btn btn-primary mt-3"
+        style={{
+          backgroundColor: "#1266F1",
+          margin: "0 auto",
+          display: "inline-block",
+        }}
+        onClick={changeType}
+      >
+        Vous n'avez pas de compte ? Créer un compte
+      </button>
     </div>
   );
 }
