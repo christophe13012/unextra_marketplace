@@ -23,13 +23,20 @@ function useQuery() {
 const Gestion = (props) => {
   const [user, loading, error] = useAuthState(auth);
   const [userLogged, setUserLogged] = useState(false);
+  const [payMode, setPayMode] = useState(false);
   const [load, setLoad] = useState(true);
   const [liste, setListe] = useState([]);
   const [listePop, setListePop] = useState([]);
   const [listeEco, setListeEco] = useState([]);
   const [listePro, setListePro] = useState([]);
   const [compte, setCompte] = useState(false);
+  const [promo, setPromo] = useState("");
+  const [cadeau, setCadeau] = useState("");
+  const [reduction, setReduction] = useState(0);
   const [email, setEmail] = useState({});
+  const [userMail, setUserMail] = useState("");
+  const [uid, setUid] = useState("");
+  const [code, setCode] = useState("");
   const [choix, setChoix] = useState("pop");
   const [pop, setPop] = useState(0);
   const [pro, setPro] = useState(0);
@@ -45,6 +52,9 @@ const Gestion = (props) => {
     auth.onAuthStateChanged(function (user) {
       setUserLogged(user);
       if (user) {
+        setUserMail(user.email);
+        setUid(user.uid);
+        console.log("user", user);
         const prospectRef = ref(db, "users/" + user.uid);
         onValue(prospectRef, (snapshot) => {
           const data = snapshot.val();
@@ -52,7 +62,6 @@ const Gestion = (props) => {
             setItems(data.items);
           }
           if (data.pop) {
-            console.log("pop", data.pop);
             const popArr = [];
             for (const [key, value] of Object.entries(data.pop)) {
               popArr.push(value);
@@ -240,137 +249,970 @@ const Gestion = (props) => {
       });
     }
   };
+  const generate = () => {
+    if (choix == "pop") {
+      if (items.pop > 0) {
+        generatePop();
+      } else {
+        toast.error("Vous n'avez pas assez de stock", {
+          position: toast.POSITION.TOP_CENTER,
+        });
+      }
+    }
+    if (choix == "eco") {
+      if (items.eco > 0) {
+        generateEco();
+      } else {
+        toast.error("Vous n'avez pas assez de stock", {
+          position: toast.POSITION.TOP_CENTER,
+        });
+      }
+    }
+    if (choix == "pro") {
+      if (items.pro > 0) {
+        generatePro();
+      } else {
+        toast.error("Vous n'avez pas assez de stock", {
+          position: toast.POSITION.TOP_CENTER,
+        });
+      }
+    }
+  };
+  const checkPromo = () => {
+    setCadeau("");
+    get(child(dbRef, `pass/${promo}`)).then((snapshot) => {
+      if (snapshot.exists() && promo != "") {
+        const data = snapshot.val();
+        console.log("data", data);
+        const reductionData = data.reduction;
+        setReduction(reductionData / 100);
+        toast.success(
+          "Le code partenaire de " + reductionData + "% est appliqué !",
+          {
+            position: toast.POSITION.TOP_CENTER,
+          }
+        );
+      } else {
+        toast.error("Ce code partenaire n'existe pas !", {
+          position: toast.POSITION.TOP_CENTER,
+        });
+      }
+    });
+  };
+  const payer = () => {
+    return;
+    if (pop + pro + eco > 0) {
+      const templateParams = {
+        userMail: userMail,
+        uid: uid,
+        pro: pro,
+        pop: pop,
+        eco: eco,
+        promo: reduction * 100,
+        to: "unextraapp@gmail.com",
+      };
+      emailjs
+        .send(
+          "service_281tpu8",
+          "template_s7l53t7",
+          templateParams,
+          "user_cs48fHhUC3ofs28N0k1oK"
+        )
+        .then(
+          function (response) {
+            console.log("SUCCESS!", response.status, response.text);
+            toast.success(
+              "Nos conseillers vont vous contacter rapidement par mail sur votre adresse " +
+                userMail +
+                " pour conclure votre achat et vous accompagner au mieux dans votre expérience UnExtra",
+              {
+                position: toast.POSITION.TOP_CENTER,
+                autoClose: false,
+                style: { width: 500, alignSelf: "center" },
+              }
+            );
+            setPop(0);
+            setPop(0);
+            setEco(0);
+            setPromo("");
+            setReduction(0);
+          },
+          function (error) {
+            console.log("FAILED...", error);
+            toast.warning(
+              "Une erreur a eu lieu lors de l'envoi du mail, merci de rééssayer ou contacter nos équipes : unextraapp@gmail.com",
+              {
+                position: toast.POSITION.TOP_CENTER,
+                autoClose: false,
+                style: { width: 500, alignSelf: "center" },
+              }
+            );
+          }
+        );
+    }
+  };
+
   return (
     <Fragment>
-      <section className="contact">
-        <div className="container">
-          <div className="row">
-            <div className="col-lg-8 col-md-10 m-auto">
-              <div className="sec-heading">
-                <h3 className="sec-title">Gestion de mes comptes UNEXTRA</h3>
-                <p>
-                  Suivez l'évolution de vos comptes et offrez des codes à vos
-                  contacts
-                </p>{" "}
+      <div
+        className="partenaire"
+        style={{
+          marginTop: 50,
+          marginBottom: 50,
+          paddingLeft: 50,
+          paddingRight: 50,
+          display: "flex",
+          flex: 1,
+        }}
+      >
+        <div
+          className="partenaireImages"
+          style={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-around",
+            flexDirection: "column",
+          }}
+        >
+          <img
+            src={require("../../assets/images/eco.png")}
+            alt=""
+            style={{ width: 200, marginBottom: 20 }}
+          />
+          <img
+            src={require("../../assets/images/pro.png")}
+            alt=""
+            style={{ width: 200, marginBottom: 20 }}
+          />
+          <img
+            src={require("../../assets/images/pop.png")}
+            alt=""
+            style={{ width: 200 }}
+          />
+        </div>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            flex: 4,
+          }}
+        >
+          <div
+            className="panierContainer"
+            style={{
+              backgroundColor: "white",
+              borderRadius: 5,
+              paddingTop: 15,
+              paddingBottom: 15,
+              marginBottom: 20,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "space-between",
+            }}
+          >
+            <div
+              className="labelsPanier"
+              style={{ display: "flex", marginBottom: 20 }}
+            >
+              <div className="produit" style={{ flex: 2, textAlign: "center" }}>
+                Produit
+              </div>
+              <div style={{ flex: 1, textAlign: "center" }}>Quantité</div>
+              <div style={{ flex: 1, textAlign: "center" }}>Prix unité</div>
+              <div style={{ flex: 1, textAlign: "center" }}>Sous-total HT</div>
+            </div>
+            <div style={{ display: "flex", marginBottom: 25 }}>
+              <div
+                className="produit"
+                style={{
+                  flex: 2,
+                  display: "flex",
+                  justifyContent: "center",
+                }}
+              >
+                <img
+                  className="imagePanier"
+                  src={require("../../assets/images/+eco.png")}
+                  alt=""
+                  style={{ width: 200 }}
+                />
+              </div>
+              <div
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  justifyContent: "center",
+                }}
+              >
+                <input
+                  type="number"
+                  value={eco}
+                  onChange={(e) => setEco(e.target.value)}
+                  style={{
+                    borderRadius: 5,
+                    borderWidth: 1,
+                    width: 50,
+                    borderColor: "#CEA55D",
+                    textAlign: "center",
+                  }}
+                />
+                <div
+                  className="plusmoins"
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    flexDirection: "column",
+                    marginLeft: 5,
+                  }}
+                >
+                  <img
+                    src={require("../../assets/images/plus.png")}
+                    alt=""
+                    style={{ width: 35, cursor: "pointer" }}
+                    onClick={() => setEco(eco + 1)}
+                  />
+                  <img
+                    src={require("../../assets/images/moins.png")}
+                    alt=""
+                    style={{ width: 35, cursor: "pointer", marginTop: 2 }}
+                    onClick={() => {
+                      if (eco > 0) {
+                        setEco(eco - 1);
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+              <div
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  justifyContent: "center",
+                }}
+              >
+                <div
+                  style={{
+                    borderRadius: 5,
+                    backgroundColor: "white",
+                    width: 90,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    border: "1px solid #CEA55D",
+                  }}
+                >
+                  49,99€
+                </div>
+              </div>
+              <div
+                className="lastPrice"
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  justifyContent: "center",
+                }}
+              >
+                <div
+                  style={{
+                    borderRadius: 5,
+                    backgroundColor: "white",
+                    width: 90,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    border: "1px solid #CEA55D",
+                  }}
+                >
+                  {(49.99 * eco).toFixed(2)}€
+                </div>
+              </div>
+            </div>
+            <div style={{ display: "flex", marginBottom: 25 }}>
+              <div
+                className="produit"
+                style={{
+                  flex: 2,
+                  display: "flex",
+                  justifyContent: "center",
+                }}
+              >
+                <img
+                  className="imagePanier"
+                  src={require("../../assets/images/+pro.png")}
+                  alt=""
+                  style={{ width: 200 }}
+                />
+              </div>
+              <div
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  justifyContent: "center",
+                }}
+              >
+                <input
+                  type="number"
+                  value={pro}
+                  onChange={(e) => setPro(e.target.value)}
+                  style={{
+                    borderRadius: 5,
+                    borderWidth: 1,
+                    width: 50,
+                    borderColor: "#CEA55D",
+                    textAlign: "center",
+                  }}
+                />
+                <div
+                  className="plusmoins"
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    flexDirection: "column",
+                    marginLeft: 5,
+                  }}
+                >
+                  <img
+                    src={require("../../assets/images/plus.png")}
+                    alt=""
+                    style={{ width: 35, cursor: "pointer" }}
+                    onClick={() => setPro(pro + 1)}
+                  />
+                  <img
+                    src={require("../../assets/images/moins.png")}
+                    alt=""
+                    style={{ width: 35, cursor: "pointer", marginTop: 2 }}
+                    onClick={() => {
+                      if (pro > 0) {
+                        setPro(pro - 1);
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+              <div
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  justifyContent: "center",
+                }}
+              >
+                <div
+                  style={{
+                    borderRadius: 5,
+                    backgroundColor: "white",
+                    width: 90,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    border: "1px solid #CEA55D",
+                  }}
+                >
+                  79,99€
+                </div>
+              </div>
+              <div
+                className="lastPrice"
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  justifyContent: "center",
+                }}
+              >
+                <div
+                  style={{
+                    borderRadius: 5,
+                    backgroundColor: "white",
+                    width: 90,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    border: "1px solid #CEA55D",
+                  }}
+                >
+                  {(79.99 * pro).toFixed(2)}€
+                </div>
+              </div>
+            </div>
+            <div style={{ display: "flex", marginBottom: 25 }}>
+              <div
+                className="produit"
+                style={{
+                  flex: 2,
+                  display: "flex",
+                  justifyContent: "center",
+                }}
+              >
+                <img
+                  className="imagePanier"
+                  src={require("../../assets/images/+pop.png")}
+                  alt=""
+                  style={{ width: 200 }}
+                />
+              </div>
+              <div
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  justifyContent: "center",
+                }}
+              >
+                <input
+                  type="number"
+                  value={pop}
+                  onChange={(e) => setPop(e.target.value)}
+                  style={{
+                    borderRadius: 5,
+                    borderWidth: 1,
+                    width: 50,
+                    borderColor: "#CEA55D",
+                    textAlign: "center",
+                  }}
+                />
+                <div
+                  className="plusmoins"
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    flexDirection: "column",
+                    marginLeft: 5,
+                  }}
+                >
+                  <img
+                    src={require("../../assets/images/plus.png")}
+                    alt=""
+                    style={{ width: 35, cursor: "pointer" }}
+                    onClick={() => setPop(pop + 1)}
+                  />
+                  <img
+                    src={require("../../assets/images/moins.png")}
+                    alt=""
+                    style={{ width: 35, cursor: "pointer", marginTop: 2 }}
+                    onClick={() => {
+                      if (pop > 0) {
+                        setPop(pop - 1);
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+              <div
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  justifyContent: "center",
+                }}
+              >
+                <div
+                  style={{
+                    borderRadius: 5,
+                    backgroundColor: "white",
+                    width: 90,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    border: "1px solid #CEA55D",
+                  }}
+                >
+                  9,99€
+                </div>
+              </div>
+              <div
+                className="lastPrice"
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  justifyContent: "center",
+                }}
+              >
+                <div
+                  style={{
+                    borderRadius: 5,
+                    backgroundColor: "white",
+                    width: 90,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    border: "1px solid #CEA55D",
+                  }}
+                >
+                  {(9.99 * pop).toFixed(2)}€
+                </div>
+              </div>
+            </div>
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <div
+                style={{
+                  height: 1,
+                  backgroundColor: "grey",
+                  width: "90%",
+                }}
+              ></div>
+            </div>
+            <div
+              style={{
+                marginTop: 20,
+                display: "flex",
+                width: 300,
+                alignSelf: "flex-end",
+              }}
+            >
+              <div style={{ width: 110, textAlign: "end" }}>Sous-total HT</div>
+              <div
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  justifyContent: "center",
+                }}
+              >
+                <div
+                  style={{
+                    borderRadius: 5,
+                    backgroundColor: "white",
+                    width: 110,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    border: "1px solid #CEA55D",
+                  }}
+                >
+                  {(
+                    (eco * 49.99 + pro * 79.99 + pop * 9.99) *
+                    (1 - reduction)
+                  ).toFixed(2)}
+                  €
+                </div>
+              </div>
+            </div>
+            <div
+              style={{
+                display: "flex",
+                width: 300,
+                alignSelf: "flex-end",
+              }}
+            >
+              <div
+                style={{
+                  width: 110,
+                  textAlign: "end",
+                  fontSize: 10,
+                }}
+              >
+                Taux TVA 20%
+              </div>
+              <div
+                style={{
+                  flex: 1,
+                }}
+              ></div>
+            </div>
+            <div
+              style={{
+                display: "flex",
+                width: 300,
+                alignSelf: "flex-end",
+              }}
+            >
+              <div style={{ width: 110, textAlign: "end" }}>Total TTC</div>
+              <div
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  justifyContent: "center",
+                }}
+              >
+                <div
+                  style={{
+                    borderRadius: 5,
+                    backgroundColor: "white",
+                    width: 110,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    border: "1px solid #CEA55D",
+                  }}
+                >
+                  {(
+                    (eco * 49.99 + pro * 79.99 + pop * 9.99) *
+                    1.2 *
+                    (1 - reduction)
+                  ).toFixed(2)}
+                  €
+                </div>
               </div>
             </div>
           </div>
-          <div className="row">
-            <div className="col-lg-10 col-md-12 m-auto">
-              <div className="mb-5">
-                NOMBRE DE COMPTES RESTANTS : {items.eco + items.pro + items.pop}{" "}
+          <div
+            style={{
+              backgroundColor: "white",
+              borderRadius: 5,
+              display: "flex",
+              paddingTop: 15,
+              paddingBottom: 15,
+              justifyContent: "flex-end",
+              paddingRight: 35,
+            }}
+          >
+            <input
+              type="text"
+              placeholder=" Code partenaire"
+              onChange={(e) => setPromo(e.target.value)}
+              value={promo}
+              id="code"
+              name="code"
+              style={{
+                marginRight: 20,
+                borderRadius: 5,
+                borderWidth: 1,
+                paddingLeft: 5,
+              }}
+            />
+            {reduction != 0 ? (
+              <div
+                className="textPromo"
+                style={{
+                  textAlign: "center",
+                }}
+              >
+                Grâce à ce code vous économisez{" "}
+                {(
+                  eco * 49.99 +
+                  pro * 79.99 +
+                  pop * 9.99 -
+                  (eco * 49.99 + pro * 79.99 + pop * 9.99) *
+                    1.2 *
+                    (1 - reduction)
+                ).toFixed(2)}
+                €
               </div>
-              <ul class="nav nav-pills">
-                <li class="nav-item">
-                  <a
-                    class={choix == "pop" ? "nav-link active" : "nav-link"}
-                    aria-current="page"
-                    href="#"
-                    onClick={() => setChoix("pop")}
-                  >
-                    Compte 24h ({items.pop})
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a
-                    class={choix == "eco" ? "nav-link active" : "nav-link"}
-                    href="#"
-                    onClick={() => setChoix("eco")}
-                  >
-                    Compte Eco ({items.eco})
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a
-                    class={choix == "pro" ? "nav-link active" : "nav-link"}
-                    href="#"
-                    onClick={() => setChoix("pro")}
-                  >
-                    Compte Pro ({items.pro})
-                  </a>
-                </li>
-              </ul>
-              {choix == "pop" && (
+            ) : (
+              <img
+                onClick={checkPromo}
+                src={require("../../assets/images/valider.png")}
+                alt=""
+                style={{ width: 125, cursor: "pointer" }}
+              />
+            )}
+          </div>
+          <div
+            className="generateContainer"
+            style={{ display: "flex", marginTop: 20 }}
+          >
+            <div
+              className="generate"
+              style={{
+                flex: 1,
+                padding: 10,
+                backgroundColor: "white",
+                borderRadius: 5,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-around",
+                  height: 25,
+                }}
+              >
+                <div onClick={generate}>
+                  <img
+                    src={require("../../assets/images/generer.png")}
+                    alt=""
+                    style={{ cursor: "pointer", width: 140 }}
+                  />
+                </div>
+                <div className="mb-5" style={{ fontSize: 12 }}>
+                  Nombre de comptes restants :{" "}
+                  {items.eco + items.pro + items.pop}{" "}
+                </div>
                 <div
+                  onClick={() => setChoix("pop")}
                   style={{
-                    backgroundColor: "#FFF8E1",
-                    marginTop: 20,
-                    padding: 10,
+                    backgroundImage:
+                      choix == "pop"
+                        ? "url(" +
+                          "https://zupimages.net/up/22/15/f0wu.png" +
+                          ")"
+                        : "url(" +
+                          "https://zupimages.net/up/22/14/jied.png" +
+                          ")",
+                    backgroundPosition: "center",
+                    backgroundSize: "cover",
+                    backgroundRepeat: "no-repeat",
                     borderRadius: 5,
+                    paddingLeft: 5,
+                    paddingRight: 5,
+                    fontSize: 12,
+                    cursor: "pointer",
                   }}
                 >
-                  {items.pop > 0 && (
-                    <button
-                      onClick={generatePop}
-                      type="button"
-                      style={{
-                        marginLeft: 0,
-                        backgroundColor: "#4CAF50",
-                        border: "none",
-                        color: "white",
-                        textAlign: "center",
-                        textDecoration: "none",
-                        display: "inline-block",
-                        fontSize: 16,
-                        paddingRight: 10,
-                        paddingLeft: 10,
-                        marginTop: 20,
-                      }}
-                    >
-                      Générer un code
-                    </button>
-                  )}
-                  {load ? (
-                    <ul
-                      class="list-group mt-4"
-                      style={{
-                        marginLeft: 20,
-                        display: "flex",
-                        alignItems: "center",
-                        paddingBottom: 40,
-                      }}
-                    >
-                      <div
-                        class="spinner-border"
-                        role="status"
-                        style={{ marginLeft: 20 }}
+                  Compte pop ({items.pop})
+                </div>
+                <div
+                  onClick={() => setChoix("eco")}
+                  style={{
+                    backgroundImage:
+                      choix == "eco"
+                        ? "url(" +
+                          "https://zupimages.net/up/22/15/f0wu.png" +
+                          ")"
+                        : "url(" +
+                          "https://zupimages.net/up/22/14/jied.png" +
+                          ")",
+                    backgroundPosition: "center",
+                    backgroundSize: "cover",
+                    backgroundRepeat: "no-repeat",
+                    borderRadius: 5,
+                    paddingLeft: 5,
+                    paddingRight: 5,
+                    fontSize: 12,
+                    cursor: "pointer",
+                  }}
+                >
+                  Compte Eco ({items.eco})
+                </div>
+                <div
+                  onClick={() => setChoix("pro")}
+                  style={{
+                    backgroundImage:
+                      choix == "pro"
+                        ? "url(" +
+                          "https://zupimages.net/up/22/15/f0wu.png" +
+                          ")"
+                        : "url(" +
+                          "https://zupimages.net/up/22/14/jied.png" +
+                          ")",
+                    backgroundPosition: "center",
+                    backgroundSize: "cover",
+                    backgroundRepeat: "no-repeat",
+                    borderRadius: 5,
+                    paddingLeft: 5,
+                    paddingRight: 5,
+                    fontSize: 12,
+                    cursor: "pointer",
+                  }}
+                >
+                  Compte Pro ({items.pro})
+                </div>
+              </div>
+              <div style={{}}>
+                {choix == "pop" && (
+                  <div>
+                    {load ? (
+                      <ul
+                        class="list-group mt-4"
+                        style={{
+                          marginLeft: 20,
+                          display: "flex",
+                          alignItems: "center",
+                          paddingBottom: 40,
+                        }}
                       >
-                        <span class="visually-hidden"></span>
-                      </div>
-                    </ul>
-                  ) : (
-                    <ul class="list-group mt-4">
-                      {listePop.length > 0
-                        ? listePop.map((el, id) => {
-                            const createdAt = new Date(
-                              el.createdAt
-                            ).toLocaleDateString("fr-FR");
-                            const validatedAt = el.validatedAt
-                              ? new Date(el.validatedAt).toLocaleDateString(
-                                  "fr-FR"
-                                )
-                              : null;
-                            return (
-                              <li
-                                key={id}
-                                class="list-group-item d-flex justify-content-between align-items-center"
-                              >
-                                <div>
-                                  <div>
-                                    Code à partager : {el.pass}{" "}
-                                    {!validatedAt && (
+                        <div
+                          class="spinner-border"
+                          role="status"
+                          style={{ marginLeft: 20 }}
+                        >
+                          <span class="visually-hidden"></span>
+                        </div>
+                      </ul>
+                    ) : (
+                      <ul class="list-group mt-4">
+                        {listePop.length > 0
+                          ? listePop.map((el, id) => {
+                              const createdAt = new Date(
+                                el.createdAt
+                              ).toLocaleDateString("fr-FR");
+                              const validatedAt = el.validatedAt
+                                ? new Date(el.validatedAt).toLocaleDateString(
+                                    "fr-FR"
+                                  )
+                                : null;
+                              return (
+                                <li
+                                  key={id}
+                                  class="list-group-item d-flex justify-content-between align-items-center"
+                                >
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      alignItems: "flex-end",
+                                      justifyContent: "space-around",
+                                      flex: 1,
+                                    }}
+                                  >
+                                    <div>
+                                      <div style={{ fontSize: 12 }}>
+                                        Code à partager :
+                                      </div>
+                                      <div
+                                        style={{
+                                          display: "flex",
+                                          justifyContent: "center",
+                                          border: "1px solid #CEA55D",
+                                          borderRadius: 5,
+                                        }}
+                                      >
+                                        {el.pass}
+                                      </div>
+                                    </div>
+                                    <div
+                                      style={{
+                                        marginLeft: 10,
+                                        backgroundImage:
+                                          "url(" +
+                                          "https://zupimages.net/up/22/15/f0wu.png" +
+                                          ")",
+                                        backgroundPosition: "center",
+                                        backgroundSize: "cover",
+                                        backgroundRepeat: "no-repeat",
+                                        borderRadius: 5,
+                                        color: "black",
+                                        textAlign: "center",
+                                        textDecoration: "none",
+                                        display: "inline-block",
+                                        fontSize: 14,
+                                        paddingRight: 10,
+                                        paddingLeft: 10,
+                                        cursor: "pointer",
+                                      }}
+                                      onClick={() => handleCopyClick(el.pass)}
+                                    >
+                                      {isCopied ? "Copié !" : "Copier"}
+                                    </div>
+                                    <div style={{ marginLeft: 20 }}>
+                                      <div style={{ fontSize: 12 }}>
+                                        Adresse email :
+                                      </div>
+                                      <input
+                                        type="email"
+                                        placeholder=" Email"
+                                        value={email[el.pass]}
+                                        onChange={(e) =>
+                                          setEmail({
+                                            ...email,
+                                            [el.pass]: e.target.value,
+                                          })
+                                        }
+                                        id="email"
+                                        name="email"
+                                        style={{
+                                          border: "1px solid #CEA55D",
+                                          borderRadius: 5,
+                                        }}
+                                      />
+                                    </div>
+                                    <img
+                                      onClick={() => sendByMail(el.pass)}
+                                      src={require("../../assets/images/envoyer.png")}
+                                      alt=""
+                                      style={{
+                                        width: 100,
+                                        height: 30,
+                                        cursor: "pointer",
+                                      }}
+                                    />
+                                    <img
+                                      onClick={() => deletePop(el.pass)}
+                                      src={require("../../assets/images/supprimer.png")}
+                                      alt=""
+                                      style={{
+                                        width: 80,
+                                        height: 25,
+                                        marginBottom: 3,
+                                        cursor: "pointer",
+                                      }}
+                                    />
+                                  </div>
+                                </li>
+                              );
+                            })
+                          : "Aucun code de ce type généré"}
+                      </ul>
+                    )}
+                  </div>
+                )}
+                {choix == "eco" && (
+                  <div>
+                    {load ? (
+                      <ul
+                        class="list-group mt-4"
+                        style={{
+                          marginLeft: 20,
+                          display: "flex",
+                          alignItems: "center",
+                          paddingBottom: 40,
+                        }}
+                      >
+                        <div
+                          class="spinner-border"
+                          role="status"
+                          style={{ marginLeft: 20 }}
+                        >
+                          <span class="visually-hidden"></span>
+                        </div>
+                      </ul>
+                    ) : (
+                      <ul class="list-group mt-4">
+                        {listeEco.length > 0
+                          ? listeEco.map((el, id) => {
+                              const createdAt = new Date(
+                                el.createdAt
+                              ).toLocaleDateString("fr-FR");
+                              const validatedAt = el.validatedAt
+                                ? new Date(el.validatedAt).toLocaleDateString(
+                                    "fr-FR"
+                                  )
+                                : null;
+                              return (
+                                <li
+                                  key={id}
+                                  class="list-group-item d-flex justify-content-between align-items-center"
+                                >
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      alignItems: "flex-end",
+                                      justifyContent: "space-around",
+                                      flex: 1,
+                                    }}
+                                  >
+                                    <div>
+                                      <div style={{ fontSize: 12 }}>
+                                        Code à partager :
+                                      </div>
+                                      <div
+                                        style={{
+                                          display: "flex",
+                                          justifyContent: "center",
+                                          border: "1px solid #CEA55D",
+                                          borderRadius: 5,
+                                        }}
+                                      >
+                                        {el.pass}
+                                      </div>
+                                    </div>
+                                    <div style={{}}>
                                       <button
                                         style={{
                                           marginLeft: 10,
-                                          backgroundColor: "#4CAF50",
+                                          backgroundImage:
+                                            "url(" +
+                                            "https://zupimages.net/up/22/15/f0wu.png" +
+                                            ")",
+                                          backgroundPosition: "center",
+                                          backgroundSize: "cover",
+                                          backgroundRepeat: "no-repeat",
                                           border: "none",
-                                          color: "white",
+                                          borderRadius: 5,
+                                          color: "black",
                                           textAlign: "center",
                                           textDecoration: "none",
                                           display: "inline-block",
                                           fontSize: 14,
                                           paddingRight: 10,
                                           paddingLeft: 10,
+                                          cursor: "pointer",
                                         }}
                                         onClick={() => handleCopyClick(el.pass)}
                                       >
@@ -378,168 +1220,140 @@ const Gestion = (props) => {
                                           {isCopied ? "Copié !" : "Copier"}
                                         </span>
                                       </button>
-                                    )}
-                                    {!validatedAt && (
-                                      <React.Fragment>
-                                        <input
-                                          type="email"
-                                          placeholder=" Email"
-                                          value={email[el.pass]}
-                                          onChange={(e) =>
-                                            setEmail({
-                                              ...email,
-                                              [el.pass]: e.target.value,
-                                            })
-                                          }
-                                          id="email"
-                                          name="email"
-                                          style={{ marginLeft: 20 }}
-                                        />
-                                        <button
-                                          style={{
-                                            marginLeft: 10,
-                                            backgroundColor: "#4CAF50",
-                                            border: "none",
-                                            color: "white",
-                                            textAlign: "center",
-                                            textDecoration: "none",
-                                            display: "inline-block",
-                                            fontSize: 14,
-                                            paddingRight: 10,
-                                            paddingLeft: 10,
-                                          }}
-                                          onClick={() => sendByMail(el.pass)}
-                                        >
-                                          <span>Envoyer par mail</span>
-                                        </button>
-                                      </React.Fragment>
-                                    )}
-                                  </div>
-                                  <div className="d-flex justify-content-between">
-                                    <div
-                                      class="font-italic"
-                                      style={{ fontSize: 13 }}
-                                    >
-                                      Créé le {createdAt}
                                     </div>
-                                    <div
-                                      class="font-italic"
-                                      style={{ fontSize: 13, marginLeft: 100 }}
-                                    >
-                                      {validatedAt
-                                        ? "Validé le " + validatedAt
-                                        : "Non utilisé"}
+                                    <div style={{ marginLeft: 20 }}>
+                                      <div style={{ fontSize: 12 }}>
+                                        Adresse email :
+                                      </div>
+                                      <input
+                                        type="email"
+                                        placeholder=" Email"
+                                        value={email[el.pass]}
+                                        onChange={(e) =>
+                                          setEmail({
+                                            ...email,
+                                            [el.pass]: e.target.value,
+                                          })
+                                        }
+                                        id="email"
+                                        name="email"
+                                        style={{
+                                          border: "1px solid #CEA55D",
+                                          borderRadius: 5,
+                                        }}
+                                      />
                                     </div>
+                                    <img
+                                      onClick={() => sendByMail(el.pass)}
+                                      src={require("../../assets/images/envoyer.png")}
+                                      alt=""
+                                      style={{
+                                        width: 100,
+                                        height: 30,
+                                        cursor: "pointer",
+                                      }}
+                                    />
+                                    <img
+                                      onClick={() => deleteEco(el.pass)}
+                                      src={require("../../assets/images/supprimer.png")}
+                                      alt=""
+                                      style={{
+                                        width: 80,
+                                        height: 25,
+                                        marginBottom: 3,
+                                        cursor: "pointer",
+                                      }}
+                                    />
                                   </div>
-                                </div>
-                                {!validatedAt && (
-                                  <button
-                                    onClick={() => deletePop(el.pass)}
-                                    type="button"
+                                </li>
+                              );
+                            })
+                          : "Aucun code de ce type généré"}
+                      </ul>
+                    )}
+                  </div>
+                )}
+                {choix == "pro" && (
+                  <div>
+                    {load ? (
+                      <ul
+                        class="list-group mt-4"
+                        style={{
+                          marginLeft: 20,
+                          display: "flex",
+                          alignItems: "center",
+                          paddingBottom: 40,
+                        }}
+                      >
+                        <div
+                          class="spinner-border"
+                          role="status"
+                          style={{ marginLeft: 20 }}
+                        >
+                          <span class="visually-hidden"></span>
+                        </div>
+                      </ul>
+                    ) : (
+                      <ul class="list-group mt-4">
+                        {listePro.length > 0
+                          ? listePro.map((el, id) => {
+                              const createdAt = new Date(
+                                el.createdAt
+                              ).toLocaleDateString("fr-FR");
+                              const validatedAt = el.validatedAt
+                                ? new Date(el.validatedAt).toLocaleDateString(
+                                    "fr-FR"
+                                  )
+                                : null;
+                              return (
+                                <li
+                                  key={id}
+                                  class="list-group-item d-flex justify-content-between align-items-center"
+                                >
+                                  <div
                                     style={{
-                                      backgroundColor: "#f44336",
-                                      border: "none",
-                                      color: "white",
-                                      textAlign: "center",
-                                      textDecoration: "none",
-                                      display: "inline-block",
-                                      fontSize: 16,
-                                      paddingRight: 10,
-                                      paddingLeft: 10,
+                                      display: "flex",
+                                      alignItems: "flex-end",
+                                      justifyContent: "space-around",
+                                      flex: 1,
                                     }}
                                   >
-                                    Supprimer
-                                  </button>
-                                )}
-                              </li>
-                            );
-                          })
-                        : "Aucun code de ce type généré"}
-                    </ul>
-                  )}
-                </div>
-              )}
-              {choix == "eco" && (
-                <div
-                  style={{
-                    backgroundColor: "#FFF8E1",
-                    marginTop: 20,
-                    padding: 10,
-                    borderRadius: 5,
-                  }}
-                >
-                  {items.eco > 0 && (
-                    <button
-                      onClick={generateEco}
-                      type="button"
-                      style={{
-                        marginLeft: 0,
-                        backgroundColor: "#4CAF50",
-                        border: "none",
-                        color: "white",
-                        textAlign: "center",
-                        textDecoration: "none",
-                        display: "inline-block",
-                        fontSize: 16,
-                        paddingRight: 10,
-                        paddingLeft: 10,
-                        marginTop: 20,
-                      }}
-                    >
-                      Générer un code
-                    </button>
-                  )}
-                  {load ? (
-                    <ul
-                      class="list-group mt-4"
-                      style={{
-                        marginLeft: 20,
-                        display: "flex",
-                        alignItems: "center",
-                        paddingBottom: 40,
-                      }}
-                    >
-                      <div
-                        class="spinner-border"
-                        role="status"
-                        style={{ marginLeft: 20 }}
-                      >
-                        <span class="visually-hidden"></span>
-                      </div>
-                    </ul>
-                  ) : (
-                    <ul class="list-group mt-4">
-                      {listeEco.length > 0
-                        ? listeEco.map((el, id) => {
-                            const createdAt = new Date(
-                              el.createdAt
-                            ).toLocaleDateString("fr-FR");
-                            const validatedAt = el.validatedAt
-                              ? new Date(el.validatedAt).toLocaleDateString(
-                                  "fr-FR"
-                                )
-                              : null;
-                            return (
-                              <li
-                                key={id}
-                                class="list-group-item d-flex justify-content-between align-items-center"
-                              >
-                                <div>
-                                  <div>
-                                    Code à partager : {el.pass}{" "}
-                                    {!validatedAt && (
+                                    <div>
+                                      <div style={{ fontSize: 12 }}>
+                                        Code à partager :
+                                      </div>
+                                      <div
+                                        style={{
+                                          display: "flex",
+                                          justifyContent: "center",
+                                          border: "1px solid #CEA55D",
+                                          borderRadius: 5,
+                                        }}
+                                      >
+                                        {el.pass}
+                                      </div>
+                                    </div>
+                                    <div style={{}}>
                                       <button
                                         style={{
                                           marginLeft: 10,
-                                          backgroundColor: "#4CAF50",
+                                          backgroundImage:
+                                            "url(" +
+                                            "https://zupimages.net/up/22/15/f0wu.png" +
+                                            ")",
+                                          backgroundPosition: "center",
+                                          backgroundSize: "cover",
+                                          backgroundRepeat: "no-repeat",
                                           border: "none",
-                                          color: "white",
+                                          borderRadius: 5,
+                                          color: "black",
                                           textAlign: "center",
                                           textDecoration: "none",
                                           display: "inline-block",
                                           fontSize: 14,
                                           paddingRight: 10,
                                           paddingLeft: 10,
+                                          cursor: "pointer",
                                         }}
                                         onClick={() => handleCopyClick(el.pass)}
                                       >
@@ -547,260 +1361,709 @@ const Gestion = (props) => {
                                           {isCopied ? "Copié !" : "Copier"}
                                         </span>
                                       </button>
-                                    )}
-                                    {!validatedAt && (
-                                      <React.Fragment>
-                                        <input
-                                          type="email"
-                                          placeholder=" Email"
-                                          value={email[el.pass]}
-                                          onChange={(e) =>
-                                            setEmail({
-                                              ...email,
-                                              [el.pass]: e.target.value,
-                                            })
-                                          }
-                                          id="email"
-                                          name="email"
-                                          style={{ marginLeft: 20 }}
-                                        />
-                                        <button
-                                          style={{
-                                            marginLeft: 10,
-                                            backgroundColor: "#4CAF50",
-                                            border: "none",
-                                            color: "white",
-                                            textAlign: "center",
-                                            textDecoration: "none",
-                                            display: "inline-block",
-                                            fontSize: 14,
-                                            paddingRight: 10,
-                                            paddingLeft: 10,
-                                          }}
-                                          onClick={() => sendByMail(el.pass)}
-                                        >
-                                          <span>Envoyer par mail</span>
-                                        </button>
-                                      </React.Fragment>
-                                    )}
-                                  </div>
-                                  <div className="d-flex justify-content-between">
-                                    <div
-                                      class="font-italic"
-                                      style={{ fontSize: 13 }}
-                                    >
-                                      Créé le {createdAt}
                                     </div>
-                                    <div
-                                      class="font-italic"
-                                      style={{ fontSize: 13, marginLeft: 100 }}
-                                    >
-                                      {validatedAt
-                                        ? "Validé le " + validatedAt
-                                        : "Non utilisé"}
+                                    <div style={{ marginLeft: 20 }}>
+                                      <div style={{ fontSize: 12 }}>
+                                        Adresse email :
+                                      </div>
+                                      <input
+                                        type="email"
+                                        placeholder=" Email"
+                                        value={email[el.pass]}
+                                        onChange={(e) =>
+                                          setEmail({
+                                            ...email,
+                                            [el.pass]: e.target.value,
+                                          })
+                                        }
+                                        id="email"
+                                        name="email"
+                                        style={{
+                                          border: "1px solid #CEA55D",
+                                          borderRadius: 5,
+                                        }}
+                                      />
                                     </div>
+                                    <img
+                                      onClick={() => sendByMail(el.pass)}
+                                      src={require("../../assets/images/envoyer.png")}
+                                      alt=""
+                                      style={{
+                                        width: 100,
+                                        height: 30,
+                                        cursor: "pointer",
+                                      }}
+                                    />
+                                    <img
+                                      onClick={() => deletePro(el.pass)}
+                                      src={require("../../assets/images/supprimer.png")}
+                                      alt=""
+                                      style={{
+                                        width: 80,
+                                        height: 25,
+                                        marginBottom: 3,
+                                        cursor: "pointer",
+                                      }}
+                                    />
                                   </div>
-                                </div>
-                                {!validatedAt && (
-                                  <button
-                                    onClick={() => deleteEco(el.pass)}
-                                    type="button"
-                                    style={{
-                                      backgroundColor: "#f44336",
-                                      border: "none",
-                                      color: "white",
-                                      textAlign: "center",
-                                      textDecoration: "none",
-                                      display: "inline-block",
-                                      fontSize: 16,
-                                      paddingRight: 10,
-                                      paddingLeft: 10,
-                                    }}
-                                  >
-                                    Supprimer
-                                  </button>
-                                )}
-                              </li>
-                            );
-                          })
-                        : "Aucun code de ce type généré"}
-                    </ul>
-                  )}
-                </div>
-              )}
-              {choix == "pro" && (
+                                </li>
+                              );
+                            })
+                          : "Aucun code de ce type généré"}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div
+              className="generateMobile"
+              style={{
+                flex: 1,
+                padding: 10,
+                backgroundColor: "white",
+                borderRadius: 5,
+                marginTop: 20,
+                display: "none",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
                 <div
                   style={{
-                    backgroundColor: "#FFF8E1",
-                    marginTop: 20,
-                    padding: 10,
-                    borderRadius: 5,
+                    display: "flex",
+                    justifyContent: "center",
+                    height: 30,
                   }}
                 >
-                  {items.pro > 0 && (
-                    <button
-                      onClick={generatePro}
-                      type="button"
-                      style={{
-                        marginLeft: 0,
-                        backgroundColor: "#4CAF50",
-                        border: "none",
-                        color: "white",
-                        textAlign: "center",
-                        textDecoration: "none",
-                        display: "inline-block",
-                        fontSize: 16,
-                        paddingRight: 10,
-                        paddingLeft: 10,
-                        marginTop: 20,
-                      }}
-                    >
-                      Générer un code
-                    </button>
-                  )}
-                  {load ? (
-                    <ul
-                      class="list-group mt-4"
-                      style={{
-                        marginLeft: 20,
-                        display: "flex",
-                        alignItems: "center",
-                        paddingBottom: 40,
-                      }}
-                    >
-                      <div
-                        class="spinner-border"
-                        role="status"
-                        style={{ marginLeft: 20 }}
+                  <div onClick={generate}>
+                    <img
+                      src={require("../../assets/images/generer.png")}
+                      alt=""
+                      style={{ cursor: "pointer", width: 100, marginRight: 30 }}
+                    />
+                  </div>
+                  <div className="mb-5" style={{ fontSize: 9 }}>
+                    Nombre de comptes restants :{" "}
+                    {items.eco + items.pro + items.pop}{" "}
+                  </div>
+                </div>
+                <div
+                  onClick={() => setChoix("pop")}
+                  style={{
+                    backgroundImage:
+                      choix == "pop"
+                        ? "url(" +
+                          "https://zupimages.net/up/22/15/f0wu.png" +
+                          ")"
+                        : "url(" +
+                          "https://zupimages.net/up/22/14/jied.png" +
+                          ")",
+                    backgroundPosition: "center",
+                    backgroundSize: "cover",
+                    backgroundRepeat: "no-repeat",
+                    borderRadius: 5,
+                    paddingLeft: 5,
+                    paddingRight: 5,
+                    fontSize: 12,
+                    cursor: "pointer",
+                    textAlign: "center",
+                    width: "50%",
+                    alignSelf: "center",
+                    marginTop: 10,
+                  }}
+                >
+                  Compte pop ({items.pop})
+                </div>
+                <div
+                  onClick={() => setChoix("eco")}
+                  style={{
+                    backgroundImage:
+                      choix == "eco"
+                        ? "url(" +
+                          "https://zupimages.net/up/22/15/f0wu.png" +
+                          ")"
+                        : "url(" +
+                          "https://zupimages.net/up/22/14/jied.png" +
+                          ")",
+                    backgroundPosition: "center",
+                    backgroundSize: "cover",
+                    backgroundRepeat: "no-repeat",
+                    borderRadius: 5,
+                    paddingLeft: 5,
+                    paddingRight: 5,
+                    fontSize: 12,
+                    cursor: "pointer",
+                    textAlign: "center",
+                    width: "50%",
+                    alignSelf: "center",
+                    marginTop: 5,
+                    marginBottom: 5,
+                  }}
+                >
+                  Compte Eco ({items.eco})
+                </div>
+                <div
+                  onClick={() => setChoix("pro")}
+                  style={{
+                    backgroundImage:
+                      choix == "pro"
+                        ? "url(" +
+                          "https://zupimages.net/up/22/15/f0wu.png" +
+                          ")"
+                        : "url(" +
+                          "https://zupimages.net/up/22/14/jied.png" +
+                          ")",
+                    backgroundPosition: "center",
+                    backgroundSize: "cover",
+                    backgroundRepeat: "no-repeat",
+                    borderRadius: 5,
+                    paddingLeft: 5,
+                    paddingRight: 5,
+                    fontSize: 12,
+                    cursor: "pointer",
+                    textAlign: "center",
+                    width: "50%",
+                    alignSelf: "center",
+                  }}
+                >
+                  Compte Pro ({items.pro})
+                </div>
+              </div>
+              <div style={{}}>
+                {choix == "pop" && (
+                  <div>
+                    {load ? (
+                      <ul
+                        class="list-group mt-4"
+                        style={{
+                          marginLeft: 20,
+                          display: "flex",
+                          alignItems: "center",
+                          paddingBottom: 40,
+                        }}
                       >
-                        <span class="visually-hidden"></span>
-                      </div>
-                    </ul>
-                  ) : (
-                    <ul class="list-group mt-4">
-                      {listePro.length > 0
-                        ? listePro.map((el, id) => {
-                            const createdAt = new Date(
-                              el.createdAt
-                            ).toLocaleDateString("fr-FR");
-                            const validatedAt = el.validatedAt
-                              ? new Date(el.validatedAt).toLocaleDateString(
-                                  "fr-FR"
-                                )
-                              : null;
-                            return (
-                              <li
-                                key={id}
-                                class="list-group-item d-flex justify-content-between align-items-center"
-                              >
-                                <div>
-                                  <div>
-                                    Code à partager : {el.pass}{" "}
-                                    {!validatedAt && (
-                                      <button
-                                        style={{
-                                          marginLeft: 10,
-                                          backgroundColor: "#4CAF50",
-                                          border: "none",
-                                          color: "white",
-                                          textAlign: "center",
-                                          textDecoration: "none",
-                                          display: "inline-block",
-                                          fontSize: 14,
-                                          paddingRight: 10,
-                                          paddingLeft: 10,
-                                        }}
-                                        onClick={() => handleCopyClick(el.pass)}
-                                      >
-                                        <span>
-                                          {isCopied ? "Copié !" : "Copier"}
-                                        </span>
-                                      </button>
-                                    )}
-                                    {!validatedAt && (
-                                      <React.Fragment>
-                                        <input
-                                          type="email"
-                                          placeholder=" Email"
-                                          value={email[el.pass]}
-                                          onChange={(e) =>
-                                            setEmail({
-                                              ...email,
-                                              [el.pass]: e.target.value,
-                                            })
-                                          }
-                                          id="email"
-                                          name="email"
-                                          style={{ marginLeft: 20 }}
-                                        />
-                                        <button
-                                          style={{
-                                            marginLeft: 10,
-                                            backgroundColor: "#4CAF50",
-                                            border: "none",
-                                            color: "white",
-                                            textAlign: "center",
-                                            textDecoration: "none",
-                                            display: "inline-block",
-                                            fontSize: 14,
-                                            paddingRight: 10,
-                                            paddingLeft: 10,
-                                          }}
-                                          onClick={() => sendByMail(el.pass)}
-                                        >
-                                          <span>Envoyer par mail</span>
-                                        </button>
-                                      </React.Fragment>
-                                    )}
-                                  </div>
-                                  <div className="d-flex justify-content-between">
-                                    <div
-                                      class="font-italic"
-                                      style={{ fontSize: 13 }}
-                                    >
-                                      Créé le {createdAt}
-                                    </div>
-                                    <div
-                                      class="font-italic"
-                                      style={{ fontSize: 13, marginLeft: 100 }}
-                                    >
-                                      {validatedAt
-                                        ? "Validé le " + validatedAt
-                                        : "Non utilisé"}
-                                    </div>
-                                  </div>
-                                </div>
-                                {!validatedAt && (
-                                  <button
-                                    onClick={() => deletePro(el.pass)}
-                                    type="button"
+                        <div
+                          class="spinner-border"
+                          role="status"
+                          style={{ marginLeft: 20 }}
+                        >
+                          <span class="visually-hidden"></span>
+                        </div>
+                      </ul>
+                    ) : (
+                      <ul class="list-group mt-4">
+                        {listePop.length > 0
+                          ? listePop.map((el, id) => {
+                              const createdAt = new Date(
+                                el.createdAt
+                              ).toLocaleDateString("fr-FR");
+                              const validatedAt = el.validatedAt
+                                ? new Date(el.validatedAt).toLocaleDateString(
+                                    "fr-FR"
+                                  )
+                                : null;
+                              return (
+                                <li
+                                  key={id}
+                                  style={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    flex: 1,
+                                    borderWidth: 1,
+                                    borderColor: "gold",
+                                    borderStyle: "solid",
+                                    borderRadius: 10,
+                                    padding: 10,
+                                    marginBottom: 10,
+                                  }}
+                                >
+                                  <div
                                     style={{
-                                      backgroundColor: "#f44336",
-                                      border: "none",
-                                      color: "white",
-                                      textAlign: "center",
-                                      textDecoration: "none",
-                                      display: "inline-block",
-                                      fontSize: 16,
-                                      paddingRight: 10,
-                                      paddingLeft: 10,
+                                      flex: 1,
+                                      flexDirection: "row",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
                                     }}
                                   >
-                                    Supprimer
-                                  </button>
-                                )}
-                              </li>
-                            );
-                          })
-                        : "Aucun code de ce type généré"}
-                    </ul>
-                  )}
-                </div>
-              )}
+                                    <div style={{ fontSize: 12 }}>
+                                      Code à partager :
+                                    </div>
+                                    <div
+                                      style={{
+                                        display: "flex",
+                                        justifyContent: "center",
+                                        border: "1px solid #CEA55D",
+                                        borderRadius: 5,
+                                        width: "40%",
+                                        marginLeft: 10,
+                                      }}
+                                    >
+                                      {el.pass}
+                                    </div>
+                                    <button
+                                      style={{
+                                        marginLeft: 10,
+                                        backgroundImage:
+                                          "url(" +
+                                          "https://zupimages.net/up/22/15/f0wu.png" +
+                                          ")",
+                                        backgroundPosition: "center",
+                                        backgroundSize: "cover",
+                                        backgroundRepeat: "no-repeat",
+                                        border: "none",
+                                        borderRadius: 5,
+                                        color: "black",
+                                        textAlign: "center",
+                                        textDecoration: "none",
+                                        display: "inline-block",
+                                        fontSize: 14,
+                                        paddingRight: 10,
+                                        paddingLeft: 10,
+                                        cursor: "pointer",
+                                      }}
+                                      onClick={() => handleCopyClick(el.pass)}
+                                    >
+                                      <span>
+                                        {isCopied ? "Copié !" : "Copier"}
+                                      </span>
+                                    </button>
+                                  </div>
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      flex: 1,
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      marginTop: 10,
+                                    }}
+                                  >
+                                    <input
+                                      type="email"
+                                      placeholder=" Partager par email"
+                                      value={email[el.pass]}
+                                      onChange={(e) =>
+                                        setEmail({
+                                          ...email,
+                                          [el.pass]: e.target.value,
+                                        })
+                                      }
+                                      id="email"
+                                      name="email"
+                                      style={{
+                                        border: "1px solid #CEA55D",
+                                        borderRadius: 5,
+                                      }}
+                                    />
+                                    <img
+                                      onClick={() => sendByMail(el.pass)}
+                                      src={require("../../assets/images/envoyer.png")}
+                                      alt=""
+                                      style={{
+                                        width: 80,
+                                        height: 25,
+                                        cursor: "pointer",
+                                        marginLeft: 10,
+                                        marginRight: 10,
+                                      }}
+                                    />
+                                    <img
+                                      onClick={() => deletePop(el.pass)}
+                                      src={require("../../assets/images/supprimer.png")}
+                                      alt=""
+                                      style={{
+                                        width: 70,
+                                        height: 20,
+                                        cursor: "pointer",
+                                      }}
+                                    />
+                                  </div>
+                                </li>
+                              );
+                            })
+                          : "Aucun code de ce type généré"}
+                      </ul>
+                    )}
+                  </div>
+                )}
+                {choix == "eco" && (
+                  <div>
+                    {load ? (
+                      <ul
+                        class="list-group mt-4"
+                        style={{
+                          marginLeft: 20,
+                          display: "flex",
+                          alignItems: "center",
+                          paddingBottom: 40,
+                        }}
+                      >
+                        <div
+                          class="spinner-border"
+                          role="status"
+                          style={{ marginLeft: 20 }}
+                        >
+                          <span class="visually-hidden"></span>
+                        </div>
+                      </ul>
+                    ) : (
+                      <ul class="list-group mt-4">
+                        {listeEco.length > 0
+                          ? listeEco.map((el, id) => {
+                              const createdAt = new Date(
+                                el.createdAt
+                              ).toLocaleDateString("fr-FR");
+                              const validatedAt = el.validatedAt
+                                ? new Date(el.validatedAt).toLocaleDateString(
+                                    "fr-FR"
+                                  )
+                                : null;
+                              return (
+                                <li
+                                  key={id}
+                                  style={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    flex: 1,
+                                    borderWidth: 1,
+                                    borderColor: "gold",
+                                    borderStyle: "solid",
+                                    borderRadius: 10,
+                                    padding: 10,
+                                    marginBottom: 10,
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      flex: 1,
+                                      flexDirection: "row",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                    }}
+                                  >
+                                    <div style={{ fontSize: 12 }}>
+                                      Code à partager :
+                                    </div>
+                                    <div
+                                      style={{
+                                        display: "flex",
+                                        justifyContent: "center",
+                                        border: "1px solid #CEA55D",
+                                        borderRadius: 5,
+                                        width: "40%",
+                                        marginLeft: 10,
+                                      }}
+                                    >
+                                      {el.pass}
+                                    </div>
+                                    <button
+                                      style={{
+                                        marginLeft: 10,
+                                        backgroundImage:
+                                          "url(" +
+                                          "https://zupimages.net/up/22/15/f0wu.png" +
+                                          ")",
+                                        backgroundPosition: "center",
+                                        backgroundSize: "cover",
+                                        backgroundRepeat: "no-repeat",
+                                        border: "none",
+                                        borderRadius: 5,
+                                        color: "black",
+                                        textAlign: "center",
+                                        textDecoration: "none",
+                                        display: "inline-block",
+                                        fontSize: 14,
+                                        paddingRight: 10,
+                                        paddingLeft: 10,
+                                        cursor: "pointer",
+                                      }}
+                                      onClick={() => handleCopyClick(el.pass)}
+                                    >
+                                      <span>
+                                        {isCopied ? "Copié !" : "Copier"}
+                                      </span>
+                                    </button>
+                                  </div>
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      flex: 1,
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      marginTop: 10,
+                                    }}
+                                  >
+                                    <input
+                                      type="email"
+                                      placeholder=" Partager par email"
+                                      value={email[el.pass]}
+                                      onChange={(e) =>
+                                        setEmail({
+                                          ...email,
+                                          [el.pass]: e.target.value,
+                                        })
+                                      }
+                                      id="email"
+                                      name="email"
+                                      style={{
+                                        border: "1px solid #CEA55D",
+                                        borderRadius: 5,
+                                      }}
+                                    />
+                                    <img
+                                      onClick={() => sendByMail(el.pass)}
+                                      src={require("../../assets/images/envoyer.png")}
+                                      alt=""
+                                      style={{
+                                        width: 80,
+                                        height: 25,
+                                        cursor: "pointer",
+                                        marginLeft: 10,
+                                        marginRight: 10,
+                                      }}
+                                    />
+                                    <img
+                                      onClick={() => deleteEco(el.pass)}
+                                      src={require("../../assets/images/supprimer.png")}
+                                      alt=""
+                                      style={{
+                                        width: 70,
+                                        height: 20,
+                                        cursor: "pointer",
+                                      }}
+                                    />
+                                  </div>
+                                </li>
+                              );
+                            })
+                          : "Aucun code de ce type généré"}
+                      </ul>
+                    )}
+                  </div>
+                )}
+                {choix == "pro" && (
+                  <div>
+                    {load ? (
+                      <ul
+                        class="list-group mt-4"
+                        style={{
+                          marginLeft: 20,
+                          display: "flex",
+                          alignItems: "center",
+                          paddingBottom: 40,
+                        }}
+                      >
+                        <div
+                          class="spinner-border"
+                          role="status"
+                          style={{ marginLeft: 20 }}
+                        >
+                          <span class="visually-hidden"></span>
+                        </div>
+                      </ul>
+                    ) : (
+                      <ul class="list-group mt-4">
+                        {listePro.length > 0
+                          ? listePro.map((el, id) => {
+                              const createdAt = new Date(
+                                el.createdAt
+                              ).toLocaleDateString("fr-FR");
+                              const validatedAt = el.validatedAt
+                                ? new Date(el.validatedAt).toLocaleDateString(
+                                    "fr-FR"
+                                  )
+                                : null;
+                              return (
+                                <li
+                                  key={id}
+                                  style={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    flex: 1,
+                                    borderWidth: 1,
+                                    borderColor: "gold",
+                                    borderStyle: "solid",
+                                    borderRadius: 10,
+                                    padding: 10,
+                                    marginBottom: 10,
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      flex: 1,
+                                      flexDirection: "row",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                    }}
+                                  >
+                                    <div style={{ fontSize: 12 }}>
+                                      Code à partager :
+                                    </div>
+                                    <div
+                                      style={{
+                                        display: "flex",
+                                        justifyContent: "center",
+                                        border: "1px solid #CEA55D",
+                                        borderRadius: 5,
+                                        width: "40%",
+                                        marginLeft: 10,
+                                      }}
+                                    >
+                                      {el.pass}
+                                    </div>
+                                    <button
+                                      style={{
+                                        marginLeft: 10,
+                                        backgroundImage:
+                                          "url(" +
+                                          "https://zupimages.net/up/22/15/f0wu.png" +
+                                          ")",
+                                        backgroundPosition: "center",
+                                        backgroundSize: "cover",
+                                        backgroundRepeat: "no-repeat",
+                                        border: "none",
+                                        borderRadius: 5,
+                                        color: "black",
+                                        textAlign: "center",
+                                        textDecoration: "none",
+                                        display: "inline-block",
+                                        fontSize: 14,
+                                        paddingRight: 10,
+                                        paddingLeft: 10,
+                                        cursor: "pointer",
+                                      }}
+                                      onClick={() => handleCopyClick(el.pass)}
+                                    >
+                                      <span>
+                                        {isCopied ? "Copié !" : "Copier"}
+                                      </span>
+                                    </button>
+                                  </div>
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      flex: 1,
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      marginTop: 10,
+                                    }}
+                                  >
+                                    <input
+                                      type="email"
+                                      placeholder=" Partager par email"
+                                      value={email[el.pass]}
+                                      onChange={(e) =>
+                                        setEmail({
+                                          ...email,
+                                          [el.pass]: e.target.value,
+                                        })
+                                      }
+                                      id="email"
+                                      name="email"
+                                      style={{
+                                        border: "1px solid #CEA55D",
+                                        borderRadius: 5,
+                                      }}
+                                    />
+                                    <img
+                                      onClick={() => sendByMail(el.pass)}
+                                      src={require("../../assets/images/envoyer.png")}
+                                      alt=""
+                                      style={{
+                                        width: 80,
+                                        height: 25,
+                                        cursor: "pointer",
+                                        marginLeft: 10,
+                                        marginRight: 10,
+                                      }}
+                                    />
+                                    <img
+                                      onClick={() => deletePro(el.pass)}
+                                      src={require("../../assets/images/supprimer.png")}
+                                      alt=""
+                                      style={{
+                                        width: 70,
+                                        height: 20,
+                                        cursor: "pointer",
+                                      }}
+                                    />
+                                  </div>
+                                </li>
+                              );
+                            })
+                          : "Aucun code de ce type généré"}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div style={{ marginLeft: 10 }}>
+              <img
+                onClick={payer}
+                src={require("../../assets/images/devis.png")}
+                alt=""
+                style={{ width: 150, marginTop: 2, cursor: "pointer" }}
+              />
             </div>
           </div>
         </div>
-      </section>
+      </div>
+      <button
+        type="button"
+        class="btn btn-primary"
+        data-toggle="modal"
+        data-target="#exampleModal"
+      >
+        Launch demo modal
+      </button>
+
+      <div
+        class="modal fade"
+        id="exampleModal"
+        tabindex="-1"
+        role="dialog"
+        aria-labelledby="exampleModalLabel"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalLabel">
+                Modal title
+              </h5>
+              <button
+                type="button"
+                class="close"
+                data-dismiss="modal"
+                aria-label="Close"
+              >
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">...</div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-dismiss="modal"
+              >
+                Close
+              </button>
+              <button type="button" class="btn btn-primary">
+                Save changes
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </Fragment>
   );
 };

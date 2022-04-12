@@ -23,9 +23,10 @@ function RegisterComponent({ changeType }) {
   const dbRef = ref(getDatabase());
   const db = getDatabase();
 
-  const register = () => {
-    registerWithEmailAndPassword(name, email, password);
-    history.push("/achat");
+  const register = async () => {
+    const user = await registerWithEmailAndPassword(name, email, password);
+    set(ref(db, "users/" + user.uid), { items: { eco: 0, pop: 0, pro: 0 } });
+    history.push("/gestion");
   };
 
   useEffect(() => {
@@ -38,7 +39,6 @@ function RegisterComponent({ changeType }) {
     if (user) {
       if (code) {
         // enregistrer uid prospect
-        console.log("code", code, user);
         get(child(dbRef, `prospectEmail/${code}`)).then((snapshot) => {
           if (snapshot.exists()) {
             const data = snapshot.val();
@@ -78,7 +78,7 @@ function RegisterComponent({ changeType }) {
         placeholder="Mot de passe"
       />
       <button className="register__btn" onClick={register}>
-        Créer son compte
+        CREER UN COMPTE
       </button>
       <button
         type="button"
@@ -90,7 +90,7 @@ function RegisterComponent({ changeType }) {
         }}
         onClick={changeType}
       >
-        J'ai déja un compte ? Je me connecte
+        J'AI DEJA UN COMPTE ? JE ME CONNECTE
       </button>
     </div>
   );

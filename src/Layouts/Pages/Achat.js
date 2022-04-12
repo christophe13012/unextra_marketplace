@@ -50,7 +50,7 @@ const Achat = (props) => {
           data.items && data.items.eco ? data.items.eco + eco * 1 : eco * 1;
         const prixTotal =
           Math.round(
-            (pop * 11.99 + eco * 59.99 + pro * 95.99 * (1 - reduction)) * 100
+            (pop * 11.99 + eco * 59.99 + pro * 95.99) * (1 - reduction) * 100
           ) / 100;
 
         set(ref(db, "users/" + userLogged.uid + "/items"), items);
@@ -271,91 +271,93 @@ const Achat = (props) => {
             )}
             Soit un total de{" "}
             {Math.round(
-              (pop * 11.99 + eco * 59.99 + pro * 95.99 * (1 - reduction)) * 100
+              (pop * 11.99 + eco * 59.99 + pro * 95.99) * (1 - reduction) * 100
             ) / 100}
             €{" "}
             {reduction != 0 &&
-              "grâce à la réduction " + reduction * 100 + "% appliquée"}
-            {mode != "partenaire" && (
-              <div
+              "grâce à la réduction de " + reduction * 100 + "% appliquée"}
+            <div
+              style={{
+                marginTop: 20,
+                fontWeight: "500",
+                textAlign: "center",
+              }}
+            >
+              <div>Entrer un code promo</div>
+              <input
+                type="text"
+                onChange={(e) => setPromo(e.target.value)}
+                value={promo}
+                id="promo"
+                name="promo"
+                style={{ width: 100 }}
+              />
+              <button
                 style={{
-                  marginTop: 20,
-                  fontWeight: "500",
-                  textAlign: "center",
+                  color: "white",
+                  backgroundColor: "#00B74A",
+                  border: "none",
+                  paddingRight: 10,
+                  paddingLeft: 10,
+                  marginLeft: 5,
                 }}
+                onClick={checkPromo}
               >
-                <div>Entrer un code promo</div>
-                <input
-                  type="text"
-                  onChange={(e) => setPromo(e.target.value)}
-                  value={promo}
-                  id="promo"
-                  name="promo"
-                  style={{ width: 100 }}
-                />
-                <button
-                  style={{
-                    color: "white",
-                    backgroundColor: "#00B74A",
-                    border: "none",
-                    paddingRight: 10,
-                    paddingLeft: 10,
-                    marginLeft: 5,
-                  }}
-                  onClick={checkPromo}
-                >
-                  Ok
-                </button>
-                <button
-                  style={{
-                    color: "white",
-                    backgroundColor: "#F93154",
-                    border: "none",
-                    paddingRight: 10,
-                    paddingLeft: 10,
-                    marginLeft: 5,
-                  }}
-                  onClick={cancelPromo}
-                >
-                  X
-                </button>
-                <div class="mt-3">Entrer un code cadeau</div>
-                <input
-                  type="text"
-                  onChange={(e) => setCadeau(e.target.value)}
-                  value={cadeau}
-                  id="cadeau"
-                  name="cadeau"
-                  style={{ width: 100 }}
-                />
-                <button
-                  style={{
-                    color: "white",
-                    backgroundColor: "#00B74A",
-                    border: "none",
-                    paddingRight: 10,
-                    paddingLeft: 10,
-                    marginLeft: 5,
-                  }}
-                  onClick={checkCadeau}
-                >
-                  Ok
-                </button>
-                <button
-                  style={{
-                    color: "white",
-                    backgroundColor: "#F93154",
-                    border: "none",
-                    paddingRight: 10,
-                    paddingLeft: 10,
-                    marginLeft: 5,
-                  }}
-                  onClick={cancelCadeau}
-                >
-                  X
-                </button>
-              </div>
-            )}
+                Ok
+              </button>
+              <button
+                style={{
+                  color: "white",
+                  backgroundColor: "#F93154",
+                  border: "none",
+                  paddingRight: 10,
+                  paddingLeft: 10,
+                  marginLeft: 5,
+                }}
+                onClick={cancelPromo}
+              >
+                X
+              </button>
+              {mode != "partenaire" && (
+                <React.Fragment>
+                  <div class="mt-3">Entrer un code cadeau</div>
+                  <input
+                    type="text"
+                    onChange={(e) => setCadeau(e.target.value)}
+                    value={cadeau}
+                    id="cadeau"
+                    name="cadeau"
+                    style={{ width: 100 }}
+                  />
+                  <button
+                    style={{
+                      color: "white",
+                      backgroundColor: "#00B74A",
+                      border: "none",
+                      paddingRight: 10,
+                      paddingLeft: 10,
+                      marginLeft: 5,
+                    }}
+                    onClick={checkCadeau}
+                  >
+                    Ok
+                  </button>
+                  <button
+                    style={{
+                      color: "white",
+                      backgroundColor: "#F93154",
+                      border: "none",
+                      paddingRight: 10,
+                      paddingLeft: 10,
+                      marginLeft: 5,
+                    }}
+                    onClick={cancelCadeau}
+                  >
+                    X
+                  </button>
+                </React.Fragment>
+              )}
+            </div>
             <button
               type="submit"
               className="btn btn-primary mt-3 mb-5"

@@ -20,6 +20,7 @@ function Login({ changeType, mode }) {
   let query = useQuery();
 
   useEffect(() => {
+    console.log("USER", user);
     const code = query.get("code");
     setCode(code);
     if (loading) {
@@ -80,23 +81,25 @@ function Login({ changeType, mode }) {
           className="login__btn"
           onClick={() => logInWithEmailAndPassword(email, password, code)}
         >
-          Se connecter
+          ME CONNECTER
         </button>
         <div>
-          <Link to="/reset">Mot de passe oublié</Link>
+          <Link style={{ color: "white" }} to="/reset">
+            MOT DE PASSE OUBLIE ?
+          </Link>
         </div>
       </div>
       <button
         type="button"
         class="btn btn-primary mt-3"
         style={{
-          backgroundColor: "#1266F1",
+          backgroundColor: "#AA8034",
           margin: "0 auto",
           display: "inline-block",
         }}
         onClick={changeType}
       >
-        Vous n'avez pas de compte ? Créer un compte
+        PAS ENCORE PARTENAIRE ? M'INSCRIRE
       </button>
     </div>
   );

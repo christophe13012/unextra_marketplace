@@ -26,6 +26,7 @@ import Gestion from "./Layouts/Pages/Gestion";
 import Achat from "./Layouts/Pages/Achat";
 import Forbidden from "./Layouts/Pages/Forbidden";
 import modeContext from "./modeContext";
+import Admin from "./Layouts/Pages/Admin";
 
 export const ModeContext = React.createContext("partenaire");
 
@@ -44,6 +45,7 @@ const App = () => {
             <Switch>
               <Route path="/" component={Home} exact />
               <Route path="/logout" component={Logout} />
+              <Route path="/admin" component={Admin} />
               <Route path="/prospect" component={Prospect} />
               <Route path="/gestion" component={Gestion} />
               <Route path="/forbidden" component={Forbidden} />

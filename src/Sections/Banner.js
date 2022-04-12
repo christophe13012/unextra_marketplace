@@ -14,93 +14,34 @@ const Banner = (props) => {
   };
   return (
     // Banner section start
-    <section className="banner">
-      <div className="spa-img">
-        <img src={require("../assets/images/ronde.png")} alt="" />
-      </div>
+    <section className="banner" style={{ backgroundColor: "#2E2E2E" }}>
       <div className="container">
-        <div className="row">
+        <div className="row" style={{ justifyContent: "center" }}>
           <div className="col-lg-6">
-            <div className="banner-content">
-              <h3>Bienvenue sur unExtra</h3>
-              {/*<a
-                className="video-btn"
-                data-fancybox
-                href="https://www.youtube.com/watch?v=FNFKSycZx8k"
-              >
-                <i className="ti-control-play"></i>
-                Qui sommes nous ?
-              </a>*/}
-              <ul class="nav nav-pills nav-fill mt-4">
-                <li
-                  class="nav-item"
-                  style={{ width: "50%" }}
-                  onClick={() => setModeFun("partenaire")}
-                >
-                  <a
-                    class={
-                      mode == "partenaire" ? "nav-link active" : "nav-link"
-                    }
-                    aria-current="page"
-                    href="#"
-                  >
-                    Je suis un partenaire
-                  </a>
-                </li>
-                <li
-                  class="nav-item"
-                  style={{
-                    width: "50%",
-                  }}
-                  onClick={() => setModeFun("normal")}
-                >
-                  <a
-                    class={
-                      mode != "partenaire" ? "nav-link active" : "nav-link"
-                    }
-                    href="#"
-                  >
-                    Je suis un employeur
-                  </a>
-                </li>
-              </ul>
+            <div className="banner-content" style={{}}>
               <div
                 style={{
-                  padding: 10,
-                  backgroundColor: "#EEBD5D",
-                  marginTop: 50,
+                  display: "flex",
+                  justifyContent: "center",
+                  backgroundColor: "white",
+                  padding: 20,
                   borderRadius: 5,
                 }}
               >
-                <div
-                  style={{
-                    color: "white",
-                    fontWeight: "bold",
-                    marginTop: 5,
-                    display: "flex",
-                    justifyContent: "center",
-                  }}
-                >
-                  <div>
-                    {mode == "partenaire"
-                      ? "Je suis partenaire"
-                      : "Je recherche"}
-                  </div>
-                  <img
-                    src={require("../assets/images/logo.png")}
-                    alt=""
-                    style={{ width: 100, height: "100%", marginLeft: 10 }}
-                  />
-                </div>
-                {login ? (
-                  <Login changeType={() => setLogin(false)} mode={mode} />
-                ) : (
-                  <RegisterComponent
-                    changeType={() => setLogin(true)}
-                    mode={mode}
-                  />
-                )}
+                <img
+                  src={require("../assets/images/blocdesk.png")}
+                  alt=""
+                  style={{ width: "100%" }}
+                />
               </div>
+              {login ? (
+                <Login changeType={() => setLogin(false)} mode={mode} />
+              ) : (
+                <RegisterComponent
+                  changeType={() => setLogin(true)}
+                  mode={mode}
+                />
+              )}
             </div>
           </div>
         </div>

@@ -22,7 +22,7 @@
 
 body {
   color: #6c6c6f;
-  background-color: #fff;
+  background-image: url("../../assets/images/back.jpeg");
   font-family: "Roboto", sans-serif;
   font-weight: 300;
   font-size: 15px;
@@ -1048,8 +1048,8 @@ section {
 }
 
 .footer {
-  background-color: #fff9f8;
-  padding: 80px 0 60px;
+  background-color: #262626;
+  padding-bottom: 30px;
 }
 
 .footer .foo-logo {
@@ -1299,6 +1299,89 @@ section {
     font-size: 200px;
     line-height: 200px;
   }
+
+  .partenaire {
+    flex-direction: column !important;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+
+  .partenaireImages {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-around !important;
+    margin-bottom: 30px;
+  }
+
+  .partenaireImages * {
+    width: 100px !important;
+    margin-bottom: unset !important;
+  }
+
+  .imagePanier {
+    width: 100px !important;
+    height: 30px !important;
+  }
+
+  .plusmoins {
+    display: none !important;
+  }
+
+  .labelsPanier * {
+    font-size: 10px !important;
+  }
+
+  .produit {
+    flex: 1 !important;
+  }
+
+  .panierContainer {
+    padding-left: 5px;
+    padding-right: 5px;
+  }
+
+  .lastPrice {
+    margin-left: 2px;
+  }
+
+  .textPromo {
+    font-size: 12px !important;
+    width: 130px !important;
+  }
+
+  .generateContainer {
+    flex-direction: column-reverse !important;
+  }
+
+  .generate {
+    margin-top: 20px;
+  }
+
+  .imageMenu {
+    width: 50px !important;
+    margin-left: 10px;
+  }
+
+  .avatarImage {
+    width: 50px !important;
+    margin-right: 10px;
+  }
+
+  .userMail {
+    font-size: 10px;
+  }
+
+  .imageLogo {
+    width: 100px !important;
+  }
+
+  .generateMobile {
+    display: block !important;
+  }
+
+  .generate {
+    display: none !important;
+  }
 }
 
 @media screen and (max-width: 479px) {
@@ -1322,12 +1405,24 @@ section {
   color: black !important;
 }
 
-li > .active {
+.banner-content li > .active {
   background-color: #23eb11 !important;
   color: white !important;
 }
 
-button {
-  background-color: #23eb11 !important;
-  border-color: #23eb11 !important;
+.banner-content button {
+  background-color: #cea55d !important;
+  border-color: #cea55d !important;
+}
+
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type="number"] {
+  -moz-appearance: textfield;
 }
